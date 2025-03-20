@@ -2,6 +2,7 @@ import ProductsList from "@/components/Product/ProductsList";
 
 const getProducts = async () => {
   const response = await fetch(process.env.NEXT_PUBLIC_API_URL + "/products");
+
   const products = await response.json();
 
   return products.data;
