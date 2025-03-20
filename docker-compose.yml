@@ -1,0 +1,76 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ./Dockerfile
+    container_name: scraper-backend
+    restart: unless-stopped
+    depends_on:
+      - db
+      - proxy-service
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=po_scraper
+      - DB_USERNAME=root
+      - DB_PASSWORD=secret
+      - PROXY_SERVICE_URL=http://proxy-service:8081
+      - PROXY_SERVICE_ENABLED=true
+    volumes:
+      - ./:/var/www/html
+    ports:
+      - "8000:80"
+    networks:
+      - scraper-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ./Dockerfile
+    container_name: scraper-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:80/api
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    networks:
+      - scraper-network
+
+  proxy-service:
+    build:
+      context: ./proxy-manager
+      dockerfile: ./Dockerfile
+    container_name: scraper-proxy-service
+    restart: unless-stopped
+    environment:
+      - PORT=8081
+    ports:
+      - "8081:8081"
+    networks:
+      - scraper-network
+
+  db:
+    image: mysql:latest
+    container_name: scraper-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: po_scraper
+      MYSQL_ROOT_PASSWORD: secret
+    volumes:
+      - dbdata:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - scraper-network
+
+networks:
+  scraper-network:
+    driver: bridge
+
+volumes:
+  dbdata:
