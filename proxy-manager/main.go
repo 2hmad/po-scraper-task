@@ -27,66 +27,44 @@ func NewProxyManager() *ProxyManager {
 		proxies: []string{},
 	}
 
-	go func() {
-        resp, err := http.Get("https://www.proxy-list.download/api/v1/get?type=http")
-        if err != nil {
-            log.Printf("Error fetching proxies: %v", err)
-            return
-        }
-        defer resp.Body.Close()
-
-        // Read the response body as plain text
-        bodyBytes, err := io.ReadAll(resp.Body)
-        if err != nil {
-            log.Printf("Error reading response body: %v", err)
-            return
-        }
-
-        // Split the response text by newline to get individual proxies
-		proxyList := strings.Split(string(bodyBytes), "\n")
-		var filteredProxies []string
-		for _, proxy := range proxyList {
-			// Trim whitespace including newlines and check if not empty
-			proxy = strings.TrimSpace(proxy)
-			if proxy != "" {
-				filteredProxies = append(filteredProxies, proxy)
-			}
-		}
-
-        pm.UpdateProxyList(filteredProxies)
-        log.Printf("Fetched %d proxies", len(filteredProxies))
-
-        // Fetch new proxies every 5 minutes
-        for range time.Tick(5 * time.Minute) {
-            resp, err := http.Get("https://www.proxy-list.download/api/v1/get?type=http")
-            if err != nil {
-                log.Printf("Error fetching proxies: %v", err)
-                continue
-            }
-
-            bodyBytes, err := io.ReadAll(resp.Body)
-            resp.Body.Close() // Close immediately after reading
-
-            if err != nil {
-                log.Printf("Error reading response body: %v", err)
-                continue
-            }
-
-            // Split by newline and filter empty entries
-            proxyList := strings.Split(string(bodyBytes), "\n")
-            var filteredProxies []string
-            for _, proxy := range proxyList {
-                if proxy != "" {
-                    filteredProxies = append(filteredProxies, proxy)
-                }
-            }
-
-            pm.UpdateProxyList(filteredProxies)
-            log.Printf("Fetched %d proxies", len(filteredProxies))
-        }
-    }()
+	go pm.startProxyFetcher()
 
 	return pm
+}
+
+func (pm *ProxyManager) startProxyFetcher() {
+	pm.fetchProxies()
+
+	for range time.Tick(5 * time.Minute) {
+		pm.fetchProxies()
+	}
+}
+
+func (pm *ProxyManager) fetchProxies() {
+	resp, err := http.Get("https://www.proxy-list.download/api/v1/get?type=http")
+	if err != nil {
+		log.Printf("Error fetching proxies: %v", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Error reading response body: %v", err)
+		return
+	}
+
+	proxyList := strings.Split(string(bodyBytes), "\n")
+	var filteredProxies []string
+	for _, proxy := range proxyList {
+		proxy = strings.TrimSpace(proxy)
+		if proxy != "" {
+			filteredProxies = append(filteredProxies, proxy)
+		}
+	}
+
+	pm.UpdateProxyList(filteredProxies)
+	log.Printf("Fetched %d proxies", len(filteredProxies))
 }
 
 func (pm *ProxyManager) GetRandomProxy() string {
@@ -180,6 +158,10 @@ func main() {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(response)
 	})
+
+    http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+        w.WriteHeader(http.StatusOK)
+    })
 
 	log.Println("Proxy manager service running on :8081")
 	log.Fatal(http.ListenAndServe(":8081", nil))

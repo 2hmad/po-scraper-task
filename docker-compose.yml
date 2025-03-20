@@ -6,20 +6,29 @@ services:
     container_name: scraper-backend
     restart: unless-stopped
     depends_on:
-      - db
-      - proxy-service
+      db:
+        condition: service_healthy
     environment:
-      - DB_HOST=db
-      - DB_PORT=3306
-      - DB_DATABASE=po_scraper
-      - DB_USERNAME=root
-      - DB_PASSWORD=secret
-      - PROXY_SERVICE_URL=http://proxy-service:8081
-      - PROXY_SERVICE_ENABLED=true
-    volumes:
-      - ./:/var/www/html
+      APP_ENV: local
+      APP_DEBUG: true
+      APP_KEY: base64:9YjjbVvAij0jgYs9meVJO+v3q4oR84QGuZMmfOAka+c=
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: po_scraper
+      DB_USERNAME: root
+      DB_PASSWORD: secret
+      PROXY_SERVICE_URL: http://proxy-service:8081
+      PROXY_SERVICE_ENABLED: true
     ports:
-      - "8000:80"
+      - "8000:8000"
+    volumes:
+      - ./backend:/var/www/html
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
     networks:
       - scraper-network
 
@@ -30,14 +39,19 @@ services:
     container_name: scraper-frontend
     restart: unless-stopped
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     environment:
       - NEXT_PUBLIC_API_URL=http://backend:80/api
     volumes:
-      - ./:/app
-      - /app/node_modules
+      - ./frontend:/app
     ports:
       - "3000:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
     networks:
       - scraper-network
 
@@ -47,8 +61,6 @@ services:
       dockerfile: ./Dockerfile
     container_name: scraper-proxy-service
     restart: unless-stopped
-    environment:
-      - PORT=8081
     ports:
       - "8081:8081"
     networks:
@@ -65,6 +77,10 @@ services:
       - dbdata:/var/lib/mysql
     ports:
       - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
     networks:
       - scraper-network
 
