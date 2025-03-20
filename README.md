@@ -12,6 +12,7 @@ A web scraping utility designed to extract and process data from Amazon.
 
 1. Clone the repository
 2. Run `docker compose up --build -d` to build the container
+3. Wait for the container to install dependencies and scrape data, this may take a few minutes, depending on your internet connection
 
 ## Usage
 
@@ -40,3 +41,7 @@ The application uses a MySQL database to store the scraped data. The database is
   - `image_url` (VARCHAR)
   - `created_at` (TIMESTAMP)
   - `updated_at` (TIMESTAMP)
+
+## Stop the Container
+
+To stop the container, run `docker compose down` in the project directory.
