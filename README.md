@@ -11,7 +11,7 @@ A web scraping utility designed to extract and process data from Amazon.
 ## Installation
 
 1. Clone the repository
-2. Run `docker-compose up --build` to build the container
+2. Run `docker compose up --build -d` to build the container
 
 ## Usage
 
