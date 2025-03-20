@@ -1,0 +1,59 @@
+# Dependency directories
+/vendor
+/node_modules
+/npm-debug.log
+/yarn-error.log
+
+# Laravel environment
+/.env
+/.env.*
+!/.env.example
+
+# Laravel storage
+/storage/app/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/testing/*
+/storage/framework/views/*
+/storage/logs/*
+!/storage/app/public/.gitkeep
+!/storage/framework/cache/.gitkeep
+!/storage/framework/sessions/.gitkeep
+!/storage/framework/testing/.gitkeep
+!/storage/framework/views/.gitkeep
+!/storage/logs/.gitkeep
+
+# IDE files
+/.idea
+/.vscode
+/*.sublime-project
+/*.sublime-workspace
+/.phpstorm.meta.php
+/_ide_helper.php
+/_ide_helper_models.php
+
+# Git and GitHub
+/.git
+/.github
+/.gitattributes
+/.gitignore
+
+# Build files
+/public/hot
+/public/storage
+/public/css
+/public/js
+/public/mix-manifest.json
+/public/build
+
+# Testing
+/phpunit.xml
+/coverage
+/.phpunit.cache
+
+# Misc
+/README.md
+/CHANGELOG.md
+/LICENSE
+/docker-compose*.yml
+/Dockerfile*
