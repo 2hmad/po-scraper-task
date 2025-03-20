@@ -77,10 +77,10 @@ class ScraperService
                         'User-Agent' => $this->getRandomUserAgent(),
                         'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
                         'Accept-Language' => 'en-US,en;q=0.5',
-                        'Referer' => 'https://www.google.com/',  // Add referer to seem more legitimate
+                        'Referer' => 'https://www.google.com/',
                         'Cache-Control' => 'max-age=0'
                     ],
-                    'timeout' => 15,  // Increase timeout for slow proxies
+                    'timeout' => 15,
                     'connect_timeout' => 10
                 ];
 
@@ -92,20 +92,53 @@ class ScraperService
                 $response = $this->client->get($url, $options);
                 $html = (string) $response->getBody();
 
-                // Rest of your scraping code...
+                $crawler = new Crawler($html);
+
+                $title = $crawler->filter('#productTitle')->count() > 0
+                    ? trim($crawler->filter('#productTitle')->text())
+                    : $crawler->filter('title')->text();
+
+                $price = '';
+                if ($crawler->filter('.a-price .a-offscreen')->count() > 0) {
+                    $priceText = trim($crawler->filter('.a-price .a-offscreen')->text());
+                } elseif ($crawler->filter('.priceToPay .a-offscreen')->count() > 0) {
+                    $priceText = trim($crawler->filter('.priceToPay .a-offscreen')->text());
+                } elseif ($crawler->filter('#priceblock_ourprice')->count() > 0) {
+                    $priceText = trim($crawler->filter('#priceblock_ourprice')->text());
+                } else {
+                    $priceText = '';
+                }
+
+                // Extract only the numeric value from the price string
+                $price = preg_replace('/[^0-9.]/', '', $priceText);
+
+                $imageUrl = '';
+                if ($crawler->filter('#landingImage')->count() > 0) {
+                    $imageUrl = $crawler->filter('#landingImage')->attr('src');
+                }
+
+                $existingProduct = Product::where('title', $title)->first();
+                if ($existingProduct) {
+                    Log::info("Product already exists: {$title}");
+                    return true;
+                }
+
+                $product = new Product();
+                $product->title = $title;
+                $product->price = $price;
+                $product->image_url = $imageUrl;
+                $product->save();
 
                 return true;
             } catch (GuzzleException $e) {
                 $attempt++;
                 Log::warning("Scraping attempt $attempt failed: " . $e->getMessage());
 
-                // Only log as error on the final attempt
                 if ($attempt >= $maxRetries) {
                     Log::error('Scraping error after ' . $maxRetries . ' attempts: ' . $e->getMessage());
                     return false;
                 }
 
-                // Wait before retrying
                 sleep(2);
             } catch (Exception $e) {
                 Log::error('Processing error: ' . $e->getMessage());

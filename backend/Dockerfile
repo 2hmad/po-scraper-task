@@ -37,6 +37,7 @@ RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache && \
 # Create entrypoint script
 RUN echo '#!/bin/bash' > /usr/local/bin/start-laravel.sh && \
     echo 'php artisan migrate' >> /usr/local/bin/start-laravel.sh && \
+    echo 'php artisan app:scrape-products' >> /usr/local/bin/start-laravel.sh && \
     echo 'php artisan serve --host=0.0.0.0 --port=8000' >> /usr/local/bin/start-laravel.sh && \
     chmod +x /usr/local/bin/start-laravel.sh
 

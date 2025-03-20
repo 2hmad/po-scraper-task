@@ -26,6 +26,12 @@ class ScrapeProducts extends Command
         'https://www.amazon.com/dp/B07VGRJDFY',
         'https://www.amazon.com/dp/B07QD6R5L7',
         'https://www.amazon.com/dp/B01N1037CV',
+        'https://www.amazon.com/dp/B09SBYHZJB',
+        'https://www.amazon.com/dp/B08N5LNQCX',
+        'https://www.amazon.com/dp/B086HJXKJJ',
+        'https://www.amazon.com/dp/B0DLVY6T12',
+        'https://www.amazon.com/dp/B0DFYD2QM5',
+        'https://www.amazon.com/dp/B0B2DGP4LC'
     ];
 
     /**
